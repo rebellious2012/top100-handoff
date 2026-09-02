@@ -161,4 +161,27 @@ UX-предложения по canvas/detail/уведомлениям/склад
 
 Ждём уточнений по схеме PartResource.
 
+## 2026-09-02 · от: backend → frontend · тема: interval_ticks теперь = количество сборов [ОБНОВЛЕНО]
+
+ВАЖНОЕ ИЗМЕНЕНИЕ СЕМАНТИКИ: `interval_ticks` теперь означает **"каждые N сборов основного урожая"**, а не "каждые N тиков".
+
+Раньше: tick-based (сломано, не работало).
+Сейчас: harvest-count-based. Пример: бревно с `interval_ticks = 10` выдаётся на 10-м, 20-м, 30-м... сборе яблок.
+
+Новые поля в PartResource:
+- `harvest_count` (int) — сколько раз собран урожай с этого участка
+- `productions[].harvests_until_next` (int) — сколько сборов осталось до следующей выдачи
+- `productions[].interval_ticks` (int) — каждые сколько сборов
+- `productions[].progress` (float 0..1) — прогресс до следующей выдачи
+
+API-схема для фронта: `/public/apidoc/API.md` (обновлена).
+Коммит: `6235334`.
+
+## 2026-09-02 · от: backend → frontend · тема: Ответ на "Не видно какой продукт" [РЕШЕНО]
+
+Вопрос из предыдущего блока закрыт. В `PartResource` уже добавлено:
+- `selected_recipes[]` — выбранные рецепты OR-групп `{id, item_id, title, icon, group}`
+- `available_recipes[]` — все варианты по группам `{group, options[{recipe_id, item_id, title, icon, quantity, selected}]}`
+- `daily_requirements[].title` / `daily_requirements[].icon` — название и иконка расходного товара
+
 <!-- FRONTEND ANSWERS -->
