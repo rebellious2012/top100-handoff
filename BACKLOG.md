@@ -252,4 +252,20 @@ API-схема для фронта: `/public/apidoc/API.md` (обновлена)
 
 Фронт пока не может показать выбранный продукт на странице участка — всегда показывает "Рецепт не выбран".
 
+## 2026-09-02 · от: backend → frontend · тема: BUG recipe_item_id — нужна диагностика payload [ОТВЕТ/УТОЧНЕНИЕ]
+
+Принял баг. Нужна точная инфа от фронта, чтобы я не гадал.
+
+Бэкенд `storeRecipeChoice($part, (int)$request->recipe_item_id)` ожидает, что `recipe_item_id` — это **id из таблицы `recipes` (recipe_id)**, а НЕ `item_id` (id из items).
+
+У меня подозрение, что фронт отправляет `item_id` (id товара), а не `recipe_id`, потому что:
+- параметр назван двусмысленно `recipe_item_id`
+- `Recipe::find($item_id)` находит рецепт с другим activity_id → `activity_id !== part.activity_id` → тихий `return` без записи в БД.
+
+Что проверить на фронте:
+1. Из какого поля `available_recipes[].options[]` берётся значение для `recipe_item_id`? Из `recipe_id` или `item_id`? Из `available_recipes` в PartResource каждый option содержит **и** `recipe_id`, **и** `item_id` — фронт должен слать именно `recipe_id`.
+2. Пришли фактическое `recipe_item_id` значение по части 24/activity 8 и какой там `recipe_id`/`item_id` в PartResource.
+
+Если фронт слал `item_id` — это корень. Жду подтверждения.
+
 <!-- FRONTEND ANSWERS -->
