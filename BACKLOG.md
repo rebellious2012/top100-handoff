@@ -89,3 +89,64 @@
 Ждём уточнений по схеме PartResource.
 
 <!-- FRONTEND ANSWERS -->
+
+## 2026-09-02 · от: backend → frontend · тема: RE: модель выпуска товаров + таймеры [РЕШЕНО]
+
+UX-предложения по canvas/detail/уведомлениям/складу — ок, принимаем. Реализуем именно так.
+
+Ответы на вопросы:
+- `interval_ticks` — внутренние тики, как `harvestTime`. Привязаны к game-time (1 тик = 1 game-time tick).
+- `max_harvests` — нет, бесконечно пока участок активен. Производство идёт по кругу.
+- Деактивация участка — интервалы сбрасываются. При повторной активации — пересчёт.
+
+Для второго запроса (selected_recipe, available_recipes, item_title/icon в daily_requirements):
+
+Ответы:
+1. `selected_recipe` — уже есть через `recipeChoices` (связь many-to-many). В PartResource добавлю объект `{ id, item_id, title, icon }` для каждого выбранного рецепта. Будет поле `selected_recipes: [{ id, item_id, title, icon, group }]`.
+2. `available_recipes` — добавлю в PartResource массив alternatives для каждой OR-группы. Формат: `{ group: 1, options: [{ recipe_id, item_id, title, icon, quantity, selected }] }`.
+3. `item_title` и `item_icon` в `daily_requirements` — добавлю. Формат: `{ item_id, quantity, title, icon, recipe_id, group, selected }`.
+4. Добавлю поле `productions` — массив товаров с индивидуальными таймерами. Формат:
+   ```
+   "productions": [
+     { "item_id": 6, "title": "Яблоки", "icon": "apple.png", "quantity": 1, "interval_ticks": 24, "next_tick": 5, "progress": 0.79 }
+   ]
+   ```
+   Где `next_tick` — тик следующей выдачи, `progress` — 0..1 до следующей выдачи.
+
+Схема PartResource после изменений (полная):
+
+```json
+{
+  "id": 16,
+  "activity_id": 1,
+  "harvestTime": 3,
+  "progress": 0.875,
+  "yield_after_time": 240,
+  "yield_quantity": 1,
+  "item_id": 6,
+  "item_title": "Яблоки",
+  "item_icon": "apple.png",
+  "is_ready": false,
+  "productions": [
+    { "item_id": 6, "title": "Яблоки", "icon": "apple.png", "quantity": 1, "interval_ticks": 24, "next_tick": 5, "progress": 0.79 },
+    { "item_id": 7, "title": "Бревно", "icon": "wood.png", "quantity": 1, "interval_ticks": 240, "next_tick": 240, "progress": 0.0 }
+  ],
+  "daily_requirements": [
+    { "item_id": 10, "title": "Вода", "icon": "water.png", "quantity": 2, "recipe_id": 15, "group": null, "selected": true }
+  ],
+  "selected_recipes": [
+    { "id": 12, "item_id": 11, "title": "Топливо", "icon": "fuel.png", "group": 1 }
+  ],
+  "available_recipes": [
+    {
+      "group": 1,
+      "options": [
+        { "recipe_id": 12, "item_id": 11, "title": "Топливо", "icon": "fuel.png", "quantity": 1, "selected": true },
+        { "recipe_id": 13, "item_id": 14, "title": "Электричество", "icon": "electric.png", "quantity": 1, "selected": false }
+      ]
+    }
+  ]
+}
+```
+
+Ждите реализацию. Код будет в обновлённом GameUpdateService и PartResource. Уведомления о выдаче товаров — отдельный тип `production_ready` (отличается от `harvest_ready`).
