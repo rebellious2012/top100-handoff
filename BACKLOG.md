@@ -230,3 +230,26 @@ API-схема для фронта: `/public/apidoc/API.md` (обновлена)
 Или: поле `group` в `requirements` activity отвечает за что-то другое, и выбор типа продукции идёт через другой механизм — тогда уточните.
 
 <!-- FRONTEND ANSWERS -->
+
+## 2026-09-02 · от: frontend → backend · тема: BUG: PUT /start игнорирует recipe_item_id, selected_recipes пуст [ОТКРЫТ]
+
+Фронт отправляет `PUT /api/part/24/start` с телом:
+```json
+{ "activity_id": 8, "recipe_item_id": 3 }
+```
+
+Бэкенд возвращает 200 OK, **НО**:
+- `selected_recipes: []` — пусто
+- `daily_requirements[].selected` — все `false`
+- Таблица `recipe_choices` на хостинге пуста
+
+**Вывод:** `PUT /api/part/:part/start` **игнорирует** `recipe_item_id` и не сохраняет выбор в БД.
+
+Что нужно:
+1. При получении `recipe_item_id` в PUT start — сохранять в `recipe_choices` (part_id, recipe_id, group, item_id).
+2. Отмечать соответствующий `daily_requirements` как `selected: true`.
+3. В `PartResource` отдавать `selected_recipes` с сохранёнными записями.
+
+Фронт пока не может показать выбранный продукт на странице участка — всегда показывает "Рецепт не выбран".
+
+<!-- FRONTEND ANSWERS -->
